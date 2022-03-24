@@ -11,13 +11,15 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("Ozakboy.FCM")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("Ozakboy")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+[assembly: System.Reflection.AssemblyDescriptionAttribute(" 發送推播、訂閱主題、主題發送推播")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
 [assembly: System.Reflection.AssemblyProductAttribute("Ozakboy.FCM")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Ozakboy.FCM")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
+[assembly: System.Reflection.AssemblyMetadataAttribute("RepositoryUrl", "https://github.com/ozakboy/ozakboy.FCM")]
 
 // 由 MSBuild WriteCodeFragment 類別產生。
 
