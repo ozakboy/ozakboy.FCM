@@ -43,5 +43,32 @@ namespace Ozakboy.FCM
         /// <param name="message">內文</param>
         /// <param name="Clicek_Url">點擊前往網站</param>
         void FcmSend(string token, string title, string message, string Clicek_Url);
+
+        /// <summary>
+        /// 發送群組訊息
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="title"></param>
+        /// <param name="message"></param>
+        /// <param name="Clicek_Url"></param>
+        /// <param name="Image_Uri"></param>
+        void FcmSendTopic(string token, string title, string message, string Clicek_Url, string Image_Uri);
+
+        /// <summary>
+        /// 發送群組訊息
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="title"></param>
+        /// <param name="message"></param>
+        /// <param name="Clicek_Url"></param>
+        void FcmSendTopic(string token, string title, string message, string Clicek_Url);
+
+        /// <summary>
+        /// 發送群組訊息
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="title"></param>
+        /// <param name="message"></param>
+        void FcmSendTopic(string token, string title, string message);
     }
 }

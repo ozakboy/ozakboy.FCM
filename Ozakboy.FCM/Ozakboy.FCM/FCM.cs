@@ -9,8 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Ozakboy.FCM.ViewModels;
 using System.Net.Mime;
-
-
+using System.Net.Http.Headers;
 
 namespace Ozakboy.FCM
 {
@@ -34,7 +33,8 @@ namespace Ozakboy.FCM
                 
             var client =  _httpClientFactory.CreateClient();
             client.BaseAddress = new Uri("https://iid.googleapis.com");
-            client.DefaultRequestHeaders.Add("Authorization" , $"key={_settings.ApplicationID}");
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("key", "=" + _settings.ApplicationID);
                 
             var data = new
             {
@@ -54,8 +54,61 @@ namespace Ozakboy.FCM
                 throw new Exception($"請輸入用戶 Token");
 
             var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("https://iid.googleapis.com");
-            client.DefaultRequestHeaders.Add("Authorization", $"key={_settings.ApplicationID}");
+            client.BaseAddress = new Uri("https://fcm.googleapis.com/");
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("key" ,"="+ _settings.ApplicationID);
+            client.DefaultRequestHeaders.Add("Sender", $"id={_settings.SenderID}");
+
+            var data = new
+            {
+                to = token,
+                notification = new
+                {
+                    body = message,
+                    title = title,
+                    sound = "Enabled"
+                }
+            };
+            var data2 = new
+            {
+                to = "/topics/" + token,
+                priority = "high",
+                collapse_key = "demo",
+                notification = new
+                {
+                    body = message,
+                    title = title,
+                    icon = String.IsNullOrEmpty(Image_Uri) ? null : Image_Uri,
+                    click_action = String.IsNullOrEmpty(Clicek_Url) ? null : Clicek_Url,
+                    sound = "Enabled",
+                }
+            };
+            var JsonData = JsonConvert.SerializeObject(data);
+
+            HttpContent contentPost = new StringContent(JsonData, Encoding.UTF8, MediaTypeNames.Application.Json);
+            var Re = client.PostAsync("/fcm/send", contentPost);
+
+        }
+
+        public void FcmSend(string token, string title, string message)
+        {
+            FcmSend(token,title,message,string.Empty,string.Empty);
+        }
+
+        public void FcmSend(string token, string title, string message, string Clicek_Url)
+        {
+            FcmSend(token, title, message, Clicek_Url, string.Empty);
+        }
+
+        public void FcmSendTopic(string token, string title, string message, string Clicek_Url, string Image_Uri)
+        {
+            if (String.IsNullOrEmpty(token))
+                throw new Exception($"請輸入用戶 Token");
+
+            var client = _httpClientFactory.CreateClient();
+            client.BaseAddress = new Uri("https://fcm.googleapis.com/");
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("key", "=" + _settings.ApplicationID);
             client.DefaultRequestHeaders.Add("Sender", $"id={_settings.SenderID}");
 
             var data = new
@@ -75,17 +128,17 @@ namespace Ozakboy.FCM
             var JsonData = JsonConvert.SerializeObject(data);
 
             HttpContent contentPost = new StringContent(JsonData, Encoding.UTF8, MediaTypeNames.Application.Json);
-            client.PostAsync("/fcm/send", contentPost);
+            var Re = client.PostAsync("/fcm/send", contentPost);
         }
 
-        public void FcmSend(string token, string title, string message)
+        public void FcmSendTopic(string token, string title, string message, string Clicek_Url)
         {
-            FcmSend(token,title,message,string.Empty,string.Empty);
+            FcmSendTopic(token,title,message,Clicek_Url,string.Empty);
         }
 
-        public void FcmSend(string token, string title, string message, string Clicek_Url)
+        public void FcmSendTopic(string token, string title, string message)
         {
-            FcmSend(token, title, message, Clicek_Url, string.Empty);
+            FcmSendTopic(token, title, message, string.Empty, string.Empty);
         }
     }
 }
