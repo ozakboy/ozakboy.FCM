@@ -25,6 +25,7 @@ namespace Ozakboy.FCM
             _httpClientFactory = httpClientFactory;
         }
 
+
         public void SubscribeTopic(string token, string topic)
         {
           
@@ -76,6 +77,15 @@ namespace Ozakboy.FCM
             HttpContent contentPost = new StringContent(JsonData, Encoding.UTF8, MediaTypeNames.Application.Json);
             client.PostAsync("/iid/v1:batchAdd", contentPost);
         }
-           
+
+        public void FcmSend(string token, string title, string message)
+        {
+            FcmSend(token,title,message,string.Empty,string.Empty);
+        }
+
+        public void FcmSend(string token, string title, string message, string Clicek_Url)
+        {
+            FcmSend(token, title, message, Clicek_Url, string.Empty);
+        }
     }
 }
