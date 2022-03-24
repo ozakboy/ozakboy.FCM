@@ -8,6 +8,9 @@ namespace Ozakboy.FCM.ViewModels
 {
     internal class VFCMSettings
     {
-        public string API_Key { get; set; }
+
+        public string ApplicationID { get; set; }
+
+        public string SenderID { get; set; }
     }
 }

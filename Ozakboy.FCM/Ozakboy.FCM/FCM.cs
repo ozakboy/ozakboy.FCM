@@ -33,7 +33,7 @@ namespace Ozakboy.FCM
                 
             var client =  _httpClientFactory.CreateClient();
             client.BaseAddress = new Uri("https://iid.googleapis.com");
-            client.DefaultRequestHeaders.Add("Authorization" , $"key={_settings.API_Key}");
+            client.DefaultRequestHeaders.Add("Authorization" , $"key={_settings.ApplicationID}");
                 
             var data = new
             {
@@ -41,6 +41,36 @@ namespace Ozakboy.FCM
                 registration_tokens = new string[] { token }
             };
 
+            var JsonData = JsonConvert.SerializeObject(data);
+
+            HttpContent contentPost = new StringContent(JsonData, Encoding.UTF8, MediaTypeNames.Application.Json);
+            client.PostAsync("/iid/v1:batchAdd", contentPost);
+        }
+
+        public void FcmSend(string token ,string title, string message, string Clicek_Url , string  Image_Uri)
+        {
+            if (String.IsNullOrEmpty(token) )
+                throw new Exception($"請輸入用戶 Token");
+
+            var client = _httpClientFactory.CreateClient();
+            client.BaseAddress = new Uri("https://iid.googleapis.com");
+            client.DefaultRequestHeaders.Add("Authorization", $"key={_settings.ApplicationID}");
+            client.DefaultRequestHeaders.Add("Sender", $"id={_settings.SenderID}");
+
+            var data = new
+            {
+                to = "/topics/" + token,
+                priority = "high",
+                collapse_key = "demo",
+                notification = new
+                {
+                    body = message,
+                    title = title,
+                    icon = String.IsNullOrEmpty(Image_Uri) ? null : Image_Uri,
+                    click_action = String.IsNullOrEmpty(Clicek_Url) ? null : Clicek_Url,
+                    sound = "Enabled",
+                }
+            };
             var JsonData = JsonConvert.SerializeObject(data);
 
             HttpContent contentPost = new StringContent(JsonData, Encoding.UTF8, MediaTypeNames.Application.Json);
