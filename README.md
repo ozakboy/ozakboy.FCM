@@ -1,3 +1,5 @@
+[![nuget](https://img.shields.io/badge/nuget-ozakboy.FCM-blue)](https://www.nuget.org/packages/Ozakboy.FCM/)
+
 ## 要求
 
 ASP.net Core 6
@@ -5,6 +7,7 @@ ASP.net Core 6
 ## 功能
 
 整合 Firebase Cloud Messaging  發送推播、訂閱主題、主題發送推播 功能
+
 
 ## 部屬
 
