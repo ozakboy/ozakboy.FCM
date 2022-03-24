@@ -21,3 +21,7 @@ ASP.net Core 6
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IFCM, FCM>();
 ```
+
+## Firebase 專案建立
+
+前往 https://console.firebase.google.com/u/0/  建立妳的專案
