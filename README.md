@@ -2,7 +2,7 @@
 
 ASP.net Core 6
 
-##功能
+## 功能
 
 整合 Firebase Cloud Messaging  發送推播、訂閱主題、主題發送推播 功能
 
