@@ -12,7 +12,7 @@ ASP.net Core 6
 
 ```
  "ApplicationID": "雲端通訊 伺服器金鑰",
-  "SenderID": "雲端通訊 寄件者 ID",
+ "SenderID": "雲端通訊 寄件者 ID",
 ```
 
 並且在 Program.cs 檔案內註冊元件
