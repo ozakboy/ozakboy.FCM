@@ -25,6 +25,12 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<IFCM, FCM>();
 ```
 
+## 可以使用的法方
+
+* SubscribeTopic
+* FcmSend
+* FcmSendTopic
+
 ## Firebase 專案建立
 
 前往 https://console.firebase.google.com/u/0/  建立妳的專案
