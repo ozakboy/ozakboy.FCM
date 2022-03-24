@@ -10,7 +10,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpClient();
-builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IFCM, FCM>();
 
 var app = builder.Build();
