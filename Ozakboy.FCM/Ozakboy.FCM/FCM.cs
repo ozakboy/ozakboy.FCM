@@ -75,7 +75,7 @@ namespace Ozakboy.FCM
             var JsonData = JsonConvert.SerializeObject(data);
 
             HttpContent contentPost = new StringContent(JsonData, Encoding.UTF8, MediaTypeNames.Application.Json);
-            client.PostAsync("/iid/v1:batchAdd", contentPost);
+            client.PostAsync("/fcm/send", contentPost);
         }
 
         public void FcmSend(string token, string title, string message)
