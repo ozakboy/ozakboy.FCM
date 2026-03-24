@@ -29,6 +29,24 @@ namespace Ozakboy.FCM.Models.Responses
         /// 是否全部成功
         /// </summary>
         public bool IsAllSuccess => FailureCount == 0;
+
+        /// <summary>
+        /// 已失效（UNREGISTERED）的裝置 Token 列表
+        /// 這些 Token 對應的裝置已解除安裝 App 或 Token 已過期，建議從資料庫中移除
+        /// </summary>
+        public List<string> UnregisteredTokens => Results
+            .Where(r => !r.IsSuccess
+                && !string.IsNullOrEmpty(r.Token)
+                && (r.ErrorCode == "UNREGISTERED" || r.ErrorCode == "NOT_FOUND"))
+            .Select(r => r.Token!)
+            .ToList();
+
+        /// <summary>
+        /// 是否有失效的裝置 Token
+        /// </summary>
+        public bool HasUnregisteredTokens => Results.Any(r =>
+            !r.IsSuccess
+            && (r.ErrorCode == "UNREGISTERED" || r.ErrorCode == "NOT_FOUND"));
     }
 
     /// <summary>

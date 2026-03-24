@@ -162,7 +162,7 @@ namespace Ozakboy.FCM.Services
         {
             ValidateTokenList(tokens);
             var messages = tokens.Select(t => new FCMMessage { Token = t, Notification = notification }).ToList();
-            return SendBatchInternalAsync(messages, cancellationToken);
+            return SendBatchWithAutoChunkAsync(messages, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -170,7 +170,7 @@ namespace Ozakboy.FCM.Services
         {
             ValidateTokenList(tokens);
             var messages = tokens.Select(t => new FCMMessage { Token = t, Notification = notification, Data = data }).ToList();
-            return SendBatchInternalAsync(messages, cancellationToken);
+            return SendBatchWithAutoChunkAsync(messages, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -178,10 +178,66 @@ namespace Ozakboy.FCM.Services
         {
             if (messages == null || messages.Count == 0)
                 throw new ArgumentException("訊息列表不可為空", nameof(messages));
-            if (messages.Count > 500)
-                throw new ArgumentException("批次發送最多 500 筆訊息", nameof(messages));
 
-            return SendBatchInternalAsync(messages, cancellationToken);
+            return SendBatchWithAutoChunkAsync(messages, cancellationToken);
+        }
+
+        #endregion
+
+        #region 排程推播
+
+        /// <inheritdoc/>
+        public async Task<FCMResponse> SendScheduledAsync(string token, Notification notification, TimeSpan delay, CancellationToken cancellationToken = default)
+        {
+            ValidateToken(token);
+            ValidateDelay(delay);
+            LOG.Info_Log($"[排程發送] 預定 {delay.TotalSeconds} 秒後發送 -> Token: {token}");
+            await Task.Delay(delay, cancellationToken);
+            return await SendAsync(token, notification, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<FCMResponse> SendScheduledAsync(string token, Notification notification, Dictionary<string, string> data, TimeSpan delay, CancellationToken cancellationToken = default)
+        {
+            ValidateToken(token);
+            ValidateDelay(delay);
+            LOG.Info_Log($"[排程發送] 預定 {delay.TotalSeconds} 秒後發送 -> Token: {token}");
+            await Task.Delay(delay, cancellationToken);
+            return await SendAsync(token, notification, data, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<FCMResponse> SendScheduledAsync(string token, Notification notification, DateTimeOffset sendAt, CancellationToken cancellationToken = default)
+        {
+            ValidateToken(token);
+            var delay = sendAt - DateTimeOffset.UtcNow;
+            ValidateDelay(delay);
+            LOG.Info_Log($"[排程發送] 預定於 {sendAt:yyyy-MM-dd HH:mm:ss} UTC 發送 -> Token: {token}");
+            await Task.Delay(delay, cancellationToken);
+            return await SendAsync(token, notification, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<FCMResponse> SendScheduledAsync(FCMMessage message, TimeSpan delay, CancellationToken cancellationToken = default)
+        {
+            ValidateMessage(message);
+            ValidateDelay(delay);
+            var target = message.Token ?? message.Topic ?? message.Condition ?? "unknown";
+            LOG.Info_Log($"[排程發送] 預定 {delay.TotalSeconds} 秒後發送 -> 目標: {target}");
+            await Task.Delay(delay, cancellationToken);
+            return await SendAsync(message, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<FCMResponse> SendScheduledAsync(FCMMessage message, DateTimeOffset sendAt, CancellationToken cancellationToken = default)
+        {
+            ValidateMessage(message);
+            var delay = sendAt - DateTimeOffset.UtcNow;
+            ValidateDelay(delay);
+            var target = message.Token ?? message.Topic ?? message.Condition ?? "unknown";
+            LOG.Info_Log($"[排程發送] 預定於 {sendAt:yyyy-MM-dd HH:mm:ss} UTC 發送 -> 目標: {target}");
+            await Task.Delay(delay, cancellationToken);
+            return await SendAsync(message, cancellationToken);
         }
 
         #endregion
@@ -388,7 +444,45 @@ namespace Ozakboy.FCM.Services
         }
 
         /// <summary>
-        /// 批次發送內部方法
+        /// 批次發送（自動分批，每批最多 500 筆）
+        /// </summary>
+        private async Task<BatchResponse> SendBatchWithAutoChunkAsync(List<FCMMessage> messages, CancellationToken cancellationToken)
+        {
+            const int chunkSize = 500;
+
+            if (messages.Count <= chunkSize)
+            {
+                return await SendBatchInternalAsync(messages, cancellationToken);
+            }
+
+            // 自動分批處理
+            var totalChunks = (int)Math.Ceiling((double)messages.Count / chunkSize);
+            LOG.Info_Log($"[批次發送] 共 {messages.Count} 筆訊息，自動分為 {totalChunks} 批（每批 {chunkSize} 筆）");
+
+            var mergedResponse = new BatchResponse();
+
+            for (int i = 0; i < totalChunks; i++)
+            {
+                var chunk = messages.Skip(i * chunkSize).Take(chunkSize).ToList();
+                LOG.Info_Log($"[批次發送] 正在處理第 {i + 1}/{totalChunks} 批（{chunk.Count} 筆）");
+
+                var chunkResponse = await SendBatchInternalAsync(chunk, cancellationToken);
+                mergedResponse.Results.AddRange(chunkResponse.Results);
+            }
+
+            LOG.Info_Log($"[批次發送] 全部完成 - 成功: {mergedResponse.SuccessCount}, 失敗: {mergedResponse.FailureCount}");
+
+            // 記錄失效的 Token
+            if (mergedResponse.HasUnregisteredTokens)
+            {
+                LOG.Warn_Log($"[批次發送] 發現 {mergedResponse.UnregisteredTokens.Count} 個已失效的裝置 Token (UNREGISTERED)，建議從資料庫中移除");
+            }
+
+            return mergedResponse;
+        }
+
+        /// <summary>
+        /// 批次發送內部方法（單批，最多 500 筆）
         /// </summary>
         private async Task<BatchResponse> SendBatchInternalAsync(List<FCMMessage> messages, CancellationToken cancellationToken)
         {
@@ -646,8 +740,6 @@ namespace Ozakboy.FCM.Services
         {
             if (tokens == null || tokens.Count == 0)
                 throw new ArgumentException("Token 列表不可為空", nameof(tokens));
-            if (tokens.Count > 1000)
-                throw new ArgumentException("Token 列表最多 1000 個", nameof(tokens));
             if (tokens.Any(string.IsNullOrWhiteSpace))
                 throw new ArgumentException("Token 列表中不可包含空值", nameof(tokens));
         }
@@ -666,6 +758,14 @@ namespace Ozakboy.FCM.Services
                 throw new ArgumentException("訊息必須指定一個目標（Token、Topic 或 Condition）", nameof(message));
             if (targetCount > 1)
                 throw new ArgumentException("訊息只能指定一個目標（Token、Topic 或 Condition 擇一）", nameof(message));
+        }
+
+        private static void ValidateDelay(TimeSpan delay)
+        {
+            if (delay <= TimeSpan.Zero)
+                throw new ArgumentException("延遲時間必須大於零", nameof(delay));
+            if (delay > TimeSpan.FromDays(30))
+                throw new ArgumentException("延遲時間不可超過 30 天", nameof(delay));
         }
 
         #endregion

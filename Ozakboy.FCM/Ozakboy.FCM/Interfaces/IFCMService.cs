@@ -106,28 +106,77 @@ namespace Ozakboy.FCM.Interfaces
         #region 批次推播
 
         /// <summary>
-        /// 批次發送通知到多個裝置
+        /// 批次發送通知到多個裝置（超過 500 筆自動分批）
         /// </summary>
-        /// <param name="tokens">裝置 Token 列表（最多 500 個）</param>
+        /// <param name="tokens">裝置 Token 列表</param>
         /// <param name="notification">通知內容</param>
         /// <param name="cancellationToken">取消權杖</param>
         Task<BatchResponse> SendMulticastAsync(List<string> tokens, Notification notification, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// 批次發送通知到多個裝置（附帶自訂資料）
+        /// 批次發送通知到多個裝置（附帶自訂資料，超過 500 筆自動分批）
         /// </summary>
-        /// <param name="tokens">裝置 Token 列表（最多 500 個）</param>
+        /// <param name="tokens">裝置 Token 列表</param>
         /// <param name="notification">通知內容</param>
         /// <param name="data">自訂 key-value 資料</param>
         /// <param name="cancellationToken">取消權杖</param>
         Task<BatchResponse> SendMulticastAsync(List<string> tokens, Notification notification, Dictionary<string, string> data, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// 批次發送多個不同的 FCM 訊息
+        /// 批次發送多個不同的 FCM 訊息（超過 500 筆自動分批）
         /// </summary>
-        /// <param name="messages">訊息列表（最多 500 個）</param>
+        /// <param name="messages">訊息列表</param>
         /// <param name="cancellationToken">取消權杖</param>
         Task<BatchResponse> SendBatchAsync(List<FCMMessage> messages, CancellationToken cancellationToken = default);
+
+        #endregion
+
+        #region 排程推播
+
+        /// <summary>
+        /// 延遲發送通知到指定裝置
+        /// 注意：延遲在客戶端實現，服務需保持運行直到發送完成
+        /// </summary>
+        /// <param name="token">裝置註冊 Token</param>
+        /// <param name="notification">通知內容</param>
+        /// <param name="delay">延遲時間</param>
+        /// <param name="cancellationToken">取消權杖</param>
+        Task<FCMResponse> SendScheduledAsync(string token, Notification notification, TimeSpan delay, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 延遲發送通知到指定裝置（附帶自訂資料）
+        /// </summary>
+        /// <param name="token">裝置註冊 Token</param>
+        /// <param name="notification">通知內容</param>
+        /// <param name="data">自訂 key-value 資料</param>
+        /// <param name="delay">延遲時間</param>
+        /// <param name="cancellationToken">取消權杖</param>
+        Task<FCMResponse> SendScheduledAsync(string token, Notification notification, Dictionary<string, string> data, TimeSpan delay, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 在指定時間發送通知到指定裝置
+        /// </summary>
+        /// <param name="token">裝置註冊 Token</param>
+        /// <param name="notification">通知內容</param>
+        /// <param name="sendAt">預定發送時間 (UTC)</param>
+        /// <param name="cancellationToken">取消權杖</param>
+        Task<FCMResponse> SendScheduledAsync(string token, Notification notification, DateTimeOffset sendAt, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 延遲發送完全自訂的 FCM 訊息
+        /// </summary>
+        /// <param name="message">完整 FCM 訊息</param>
+        /// <param name="delay">延遲時間</param>
+        /// <param name="cancellationToken">取消權杖</param>
+        Task<FCMResponse> SendScheduledAsync(FCMMessage message, TimeSpan delay, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 在指定時間發送完全自訂的 FCM 訊息
+        /// </summary>
+        /// <param name="message">完整 FCM 訊息</param>
+        /// <param name="sendAt">預定發送時間 (UTC)</param>
+        /// <param name="cancellationToken">取消權杖</param>
+        Task<FCMResponse> SendScheduledAsync(FCMMessage message, DateTimeOffset sendAt, CancellationToken cancellationToken = default);
 
         #endregion
 
