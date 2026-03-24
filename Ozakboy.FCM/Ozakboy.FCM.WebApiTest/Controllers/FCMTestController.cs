@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Ozakboy.FCM.Interfaces;
+using Ozakboy.FCM.Models.Messages;
 
 namespace Ozakboy.FCM.WebApiTest.Controllers
 {
@@ -7,33 +8,180 @@ namespace Ozakboy.FCM.WebApiTest.Controllers
     [ApiController]
     public class FCMTestController : ControllerBase
     {
-        private IFCM _ifcm;
-        private string  Token = "c_4mjMz0QoBbPeBhn8FNJf:APA91bF7YgCMjgTUYOkcVKEB1_1feQp92e8h_klOwCa4-8VEd51uTiNwI5qgk2qh_oKxu4fzG7UtG4IxB3R46Q7TlO_GqoYxRAh-PRu9n7p-hiAvVOuRpcLZ4Z-SnOEXgHAKxiTq52lg";
-       
-        public FCMTestController(IFCM ifcm)
+        private readonly IFCMService _fcmService;
+        private const string TestToken = "your_device_token_here";
+
+        public FCMTestController(IFCMService fcmService)
         {
-            _ifcm = ifcm;
+            _fcmService = fcmService;
         }
 
+        /// <summary>
+        /// 測試發送單一裝置通知
+        /// </summary>
         [HttpGet]
-        public IActionResult TestGet()
+        public async Task<IActionResult> TestSend()
         {
-            _ifcm.FcmSend(Token,"測試","發送");
-            return Ok();
+            var result = await _fcmService.SendAsync(TestToken,
+                new Notification { Title = "測試", Body = "發送通知" });
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
+        /// <summary>
+        /// 測試發送通知（附帶自訂資料）
+        /// </summary>
         [HttpGet]
-        public IActionResult SetGroup()
+        public async Task<IActionResult> TestSendWithData()
         {
-             _ifcm.SubscribeTopic(Token, "UserEnd");
-            return Ok();
+            var result = await _fcmService.SendAsync(TestToken,
+                new Notification { Title = "訂單通知", Body = "您的訂單已出貨" },
+                new Dictionary<string, string>
+                {
+                    { "order_id", "12345" },
+                    { "action", "open_order" }
+                });
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
-        [HttpGet]
 
-        public IActionResult SendGroupMessage()
+        /// <summary>
+        /// 測試發送靜默推播（純資料，不顯示通知）
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> TestSendData()
         {
-            _ifcm.FcmSendTopic("UserEnd","測試群組","群組訊息");
-            return Ok();
+            var result = await _fcmService.SendDataAsync(TestToken,
+                new Dictionary<string, string>
+                {
+                    { "sync", "true" },
+                    { "timestamp", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString() }
+                });
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// 測試發送完全自訂訊息（含 Android/iOS/Web 平台設定）
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> TestSendCustom()
+        {
+            var message = new FCMMessage
+            {
+                Token = TestToken,
+                Notification = new Notification
+                {
+                    Title = "促銷活動",
+                    Body = "限時 8 折優惠！",
+                    Image = "https://example.com/promo.jpg"
+                },
+                Data = new Dictionary<string, string>
+                {
+                    { "url", "/promo/summer2024" }
+                },
+                Android = new AndroidConfig
+                {
+                    Priority = AndroidMessagePriority.High,
+                    Notification = new AndroidNotification
+                    {
+                        ChannelId = "promotions",
+                        Sound = "default",
+                        ClickAction = "OPEN_PROMO"
+                    }
+                },
+                Apns = new ApnsConfig
+                {
+                    Payload = new ApnsPayload
+                    {
+                        Aps = new Aps
+                        {
+                            Badge = 1,
+                            Sound = "default"
+                        }
+                    }
+                },
+                Webpush = new WebpushConfig
+                {
+                    FcmOptions = new WebpushFcmOptions
+                    {
+                        Link = "https://example.com/promo"
+                    }
+                }
+            };
+
+            var result = await _fcmService.SendAsync(message);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// 測試訂閱主題
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> SubscribeTopic()
+        {
+            var result = await _fcmService.SubscribeToTopicAsync("UserEnd", TestToken);
+            return result.IsAllSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// 測試取消訂閱主題
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> UnsubscribeTopic()
+        {
+            var result = await _fcmService.UnsubscribeFromTopicAsync("UserEnd", TestToken);
+            return result.IsAllSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// 測試發送主題通知
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> SendToTopic()
+        {
+            var result = await _fcmService.SendToTopicAsync("UserEnd",
+                new Notification { Title = "主題通知", Body = "這是發送給 UserEnd 主題的訊息" });
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// 測試條件推播
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> SendToCondition()
+        {
+            var result = await _fcmService.SendToConditionAsync(
+                "'UserEnd' in topics || 'AdminEnd' in topics",
+                new Notification { Title = "條件推播", Body = "這是條件推播訊息" });
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// 測試批次推播
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SendMulticast([FromBody] List<string> tokens)
+        {
+            if (tokens == null || tokens.Count == 0)
+                return BadRequest("請提供 Token 列表");
+
+            var result = await _fcmService.SendMulticastAsync(tokens,
+                new Notification { Title = "批次通知", Body = "這是批次推播訊息" });
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 測試驗證訊息格式（不實際發送）
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ValidateMessage()
+        {
+            var message = new FCMMessage
+            {
+                Token = TestToken,
+                Notification = new Notification { Title = "驗證", Body = "驗證訊息格式" }
+            };
+
+            var result = await _fcmService.ValidateAsync(message);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
     }
 }

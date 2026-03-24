@@ -1,20 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Authors>Ozakboy</Authors>
     <PackageProjectUrl>https://github.com/ozakboy/ozakboy.FCM</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ozakboy/ozakboy.FCM</RepositoryUrl>
-    <Description> 發送推播、訂閱主題、主題發送推播</Description>
+    <Description>Google Firebase Cloud Messaging (FCM) HTTP v1 API 推播通知套件，支援單一裝置推播、主題推播、條件推播、批次推播、主題訂閱/取消訂閱，支援 Android/iOS/Web 平台專屬設定</Description>
+    <PackageTags>FCM;Firebase;CloudMessaging;PushNotification;Google</PackageTags>
+    <Version>2.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.64.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.1" />
+    <PackageReference Include="ozakboy.NLOG" Version="2.1.0" />
+    <PackageReference Include="System.Text.Json" Version="6.0.11" />
   </ItemGroup>
 
 </Project>
