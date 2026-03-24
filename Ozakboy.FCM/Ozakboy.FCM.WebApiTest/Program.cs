@@ -1,4 +1,4 @@
-using Ozakboy.FCM;
+using Ozakboy.FCM.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,8 +9,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddHttpClient();
-builder.Services.AddScoped<IFCM, FCM>();
+// 註冊 FCM 服務（從 appsettings.json 的 "FCMSettings" 區段讀取設定）
+builder.Services.AddOzakboyFCM(builder.Configuration);
 
 var app = builder.Build();
 
