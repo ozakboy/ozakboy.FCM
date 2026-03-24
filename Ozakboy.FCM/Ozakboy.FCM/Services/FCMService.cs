@@ -225,7 +225,7 @@ namespace Ozakboy.FCM.Services
         #region 內部方法
 
         /// <summary>
-        /// 核心發送方法
+        /// 核心發送方法（含重試機制）
         /// </summary>
         private async Task<FCMResponse> SendInternalAsync(FCMMessage message, bool validateOnly, CancellationToken cancellationToken)
         {
@@ -239,57 +239,152 @@ namespace Ozakboy.FCM.Services
             var target = message.Token ?? message.Topic ?? message.Condition ?? "unknown";
             LOG.Info_Log($"{logPrefix} FCM 訊息 -> 目標: {target}");
 
-            try
+            var retrySettings = _settings.Retry;
+            var maxAttempts = retrySettings.Enabled ? retrySettings.MaxRetryCount + 1 : 1;
+
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                var accessToken = await _tokenManager.GetAccessTokenAsync(cancellationToken);
-                var client = _httpClientFactory.CreateClient();
-
-                var jsonContent = JsonSerializer.Serialize(request, JsonOptions);
-                LOG.Debug_Log($"{logPrefix} 請求內容: {jsonContent}");
-
-                var httpRequest = new HttpRequestMessage(HttpMethod.Post, SendEndpoint)
+                try
                 {
-                    Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
-                };
-                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                    var accessToken = await _tokenManager.GetAccessTokenAsync(cancellationToken);
+                    var client = _httpClientFactory.CreateClient();
 
-                var httpResponse = await client.SendAsync(httpRequest, cancellationToken);
-                var responseBody = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
+                    var jsonContent = JsonSerializer.Serialize(request, JsonOptions);
+                    if (attempt == 1)
+                    {
+                        LOG.Debug_Log($"{logPrefix} 請求內容: {jsonContent}");
+                    }
 
-                LOG.Debug_Log($"{logPrefix} 回應狀態: {(int)httpResponse.StatusCode}, 內容: {responseBody}");
+                    var httpRequest = new HttpRequestMessage(HttpMethod.Post, SendEndpoint)
+                    {
+                        Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
+                    };
+                    httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-                if (httpResponse.IsSuccessStatusCode)
-                {
-                    var successResponse = JsonSerializer.Deserialize<FCMResponse>(responseBody, JsonOptions);
-                    var result = successResponse ?? new FCMResponse();
-                    result.IsSuccess = true;
-                    result.StatusCode = (int)httpResponse.StatusCode;
-                    result.RawResponse = responseBody;
+                    var httpResponse = await client.SendAsync(httpRequest, cancellationToken);
+                    var responseBody = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
 
-                    LOG.Info_Log($"{logPrefix} 發送成功 -> MessageName: {result.MessageName}");
-                    return result;
-                }
-                else
-                {
-                    // 如果是 401，清除 Token 快取
+                    LOG.Debug_Log($"{logPrefix} 回應狀態: {(int)httpResponse.StatusCode}, 內容: {responseBody}");
+
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        var successResponse = JsonSerializer.Deserialize<FCMResponse>(responseBody, JsonOptions);
+                        var result = successResponse ?? new FCMResponse();
+                        result.IsSuccess = true;
+                        result.StatusCode = (int)httpResponse.StatusCode;
+                        result.RawResponse = responseBody;
+
+                        if (attempt > 1)
+                        {
+                            LOG.Info_Log($"{logPrefix} 第 {attempt} 次嘗試發送成功 -> MessageName: {result.MessageName}");
+                        }
+                        else
+                        {
+                            LOG.Info_Log($"{logPrefix} 發送成功 -> MessageName: {result.MessageName}");
+                        }
+                        return result;
+                    }
+
+                    var statusCode = (int)httpResponse.StatusCode;
+
+                    // 401: Token 過期，清除快取後重試
                     if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     {
                         _tokenManager.InvalidateToken();
                         LOG.Warn_Log($"{logPrefix} Access Token 已過期，已清除快取");
+
+                        if (attempt < maxAttempts)
+                        {
+                            LOG.Info_Log($"{logPrefix} 將以新 Token 重試 (第 {attempt + 1}/{maxAttempts} 次)");
+                            continue; // 401 不需要延遲，直接重新取得 Token 即可
+                        }
                     }
 
-                    return ParseErrorResponse(responseBody, (int)httpResponse.StatusCode, logPrefix);
+                    // 429/500/502/503: 可重試的暫時性錯誤
+                    if (IsRetryableStatusCode(statusCode) && attempt < maxAttempts)
+                    {
+                        var delay = CalculateRetryDelay(attempt, retrySettings, httpResponse);
+                        LOG.Warn_Log($"{logPrefix} HTTP {statusCode}，將在 {delay.TotalMilliseconds}ms 後重試 (第 {attempt + 1}/{maxAttempts} 次)");
+                        await Task.Delay(delay, cancellationToken);
+                        continue;
+                    }
+
+                    // 不可重試或已達最大次數，回傳錯誤
+                    if (attempt > 1)
+                    {
+                        LOG.Error_Log($"{logPrefix} 經過 {attempt} 次嘗試仍失敗，HTTP {statusCode}");
+                    }
+                    return ParseErrorResponse(responseBody, statusCode, logPrefix);
+                }
+                catch (FCMException)
+                {
+                    throw;
+                }
+                catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex) when (attempt < maxAttempts && IsRetryableException(ex))
+                {
+                    var delay = CalculateRetryDelay(attempt, retrySettings);
+                    LOG.Warn_Log($"{logPrefix} 發送異常 ({ex.GetType().Name}: {ex.Message})，將在 {delay.TotalMilliseconds}ms 後重試 (第 {attempt + 1}/{maxAttempts} 次)");
+                    await Task.Delay(delay, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    LOG.Error_Log($"{logPrefix} FCM 發送失敗", ex);
+                    throw new FCMException($"FCM 發送失敗: {ex.Message}", ex);
                 }
             }
-            catch (FCMException)
+
+            // 不應到達此處，但作為安全保障
+            throw new FCMException("FCM 發送失敗：已超過最大重試次數");
+        }
+
+        /// <summary>
+        /// 判斷 HTTP 狀態碼是否可重試
+        /// </summary>
+        private static bool IsRetryableStatusCode(int statusCode)
+        {
+            return statusCode == 429  // Too Many Requests
+                || statusCode == 500  // Internal Server Error
+                || statusCode == 502  // Bad Gateway
+                || statusCode == 503; // Service Unavailable
+        }
+
+        /// <summary>
+        /// 判斷例外是否為可重試的暫時性錯誤
+        /// </summary>
+        private static bool IsRetryableException(Exception ex)
+        {
+            return ex is HttpRequestException
+                || ex is TaskCanceledException; // 逾時（非使用者取消）
+        }
+
+        /// <summary>
+        /// 計算指數退避重試延遲
+        /// </summary>
+        private static TimeSpan CalculateRetryDelay(int attempt, RetrySettings settings, HttpResponseMessage? response = null)
+        {
+            // 優先使用 FCM 回傳的 Retry-After 標頭
+            if (response?.Headers.RetryAfter != null)
             {
-                throw;
+                if (response.Headers.RetryAfter.Delta.HasValue)
+                {
+                    var retryAfter = response.Headers.RetryAfter.Delta.Value;
+                    if (retryAfter.TotalMilliseconds > 0 && retryAfter.TotalMilliseconds <= settings.MaxDelayMs)
+                    {
+                        return retryAfter;
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                LOG.Error_Log($"{logPrefix} FCM 發送失敗", ex);
-                throw new FCMException($"FCM 發送失敗: {ex.Message}", ex);
-            }
+
+            // 指數退避: initialDelay * 2^(attempt-1) + 隨機抖動
+            var baseDelay = settings.InitialDelayMs * Math.Pow(2, attempt - 1);
+            var jitter = Random.Shared.Next(0, settings.InitialDelayMs / 2);
+            var totalMs = Math.Min(baseDelay + jitter, settings.MaxDelayMs);
+
+            return TimeSpan.FromMilliseconds(totalMs);
         }
 
         /// <summary>
@@ -352,7 +447,7 @@ namespace Ozakboy.FCM.Services
         }
 
         /// <summary>
-        /// 主題管理操作
+        /// 主題管理操作（含重試機制）
         /// </summary>
         private async Task<TopicResponse> TopicManagementAsync(
             string endpoint, string topic, List<string> tokens, CancellationToken cancellationToken)
@@ -360,83 +455,131 @@ namespace Ozakboy.FCM.Services
             var action = endpoint.Contains("batchAdd") ? "訂閱" : "取消訂閱";
             LOG.Info_Log($"[主題{action}] 主題: {topic}, Token 數量: {tokens.Count}");
 
-            try
+            var retrySettings = _settings.Retry;
+            var maxAttempts = retrySettings.Enabled ? retrySettings.MaxRetryCount + 1 : 1;
+
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                var accessToken = await _tokenManager.GetAccessTokenAsync(cancellationToken);
-                var client = _httpClientFactory.CreateClient();
-
-                var requestBody = new
+                try
                 {
-                    to = $"/topics/{topic}",
-                    registration_tokens = tokens
-                };
+                    var accessToken = await _tokenManager.GetAccessTokenAsync(cancellationToken);
+                    var client = _httpClientFactory.CreateClient();
 
-                var jsonContent = JsonSerializer.Serialize(requestBody, JsonOptions);
-                LOG.Debug_Log($"[主題{action}] 請求內容: {jsonContent}");
-
-                var httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint)
-                {
-                    Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
-                };
-                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var httpResponse = await client.SendAsync(httpRequest, cancellationToken);
-                var responseBody = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
-
-                LOG.Debug_Log($"[主題{action}] 回應狀態: {(int)httpResponse.StatusCode}, 內容: {responseBody}");
-
-                if (httpResponse.IsSuccessStatusCode)
-                {
-                    var result = JsonSerializer.Deserialize<TopicResponse>(responseBody, JsonOptions)
-                                 ?? new TopicResponse();
-
-                    result.StatusCode = (int)httpResponse.StatusCode;
-                    result.RawResponse = responseBody;
-
-                    // 計算成功/失敗數量
-                    if (result.Results != null)
+                    var requestBody = new
                     {
-                        result.SuccessCount = result.Results.Count(r => r == null);
-                        result.FailureCount = result.Results.Count(r => r != null);
-                    }
-                    else
+                        to = $"/topics/{topic}",
+                        registration_tokens = tokens
+                    };
+
+                    var jsonContent = JsonSerializer.Serialize(requestBody, JsonOptions);
+                    if (attempt == 1)
                     {
-                        result.SuccessCount = tokens.Count;
-                        result.FailureCount = 0;
+                        LOG.Debug_Log($"[主題{action}] 請求內容: {jsonContent}");
                     }
 
-                    LOG.Info_Log($"[主題{action}] 完成 - 成功: {result.SuccessCount}, 失敗: {result.FailureCount}");
-                    return result;
-                }
-                else
-                {
+                    var httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint)
+                    {
+                        Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
+                    };
+                    httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                    httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var httpResponse = await client.SendAsync(httpRequest, cancellationToken);
+                    var responseBody = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
+
+                    LOG.Debug_Log($"[主題{action}] 回應狀態: {(int)httpResponse.StatusCode}, 內容: {responseBody}");
+
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        var result = JsonSerializer.Deserialize<TopicResponse>(responseBody, JsonOptions)
+                                     ?? new TopicResponse();
+
+                        result.StatusCode = (int)httpResponse.StatusCode;
+                        result.RawResponse = responseBody;
+
+                        if (result.Results != null)
+                        {
+                            result.SuccessCount = result.Results.Count(r => r == null);
+                            result.FailureCount = result.Results.Count(r => r != null);
+                        }
+                        else
+                        {
+                            result.SuccessCount = tokens.Count;
+                            result.FailureCount = 0;
+                        }
+
+                        if (attempt > 1)
+                        {
+                            LOG.Info_Log($"[主題{action}] 第 {attempt} 次嘗試完成 - 成功: {result.SuccessCount}, 失敗: {result.FailureCount}");
+                        }
+                        else
+                        {
+                            LOG.Info_Log($"[主題{action}] 完成 - 成功: {result.SuccessCount}, 失敗: {result.FailureCount}");
+                        }
+                        return result;
+                    }
+
+                    var statusCode = (int)httpResponse.StatusCode;
+
                     if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     {
                         _tokenManager.InvalidateToken();
+                        LOG.Warn_Log($"[主題{action}] Access Token 已過期，已清除快取");
+
+                        if (attempt < maxAttempts)
+                        {
+                            LOG.Info_Log($"[主題{action}] 將以新 Token 重試 (第 {attempt + 1}/{maxAttempts} 次)");
+                            continue;
+                        }
                     }
 
-                    var errorResult = new TopicResponse
+                    if (IsRetryableStatusCode(statusCode) && attempt < maxAttempts)
                     {
-                        StatusCode = (int)httpResponse.StatusCode,
+                        var delay = CalculateRetryDelay(attempt, retrySettings, httpResponse);
+                        LOG.Warn_Log($"[主題{action}] HTTP {statusCode}，將在 {delay.TotalMilliseconds}ms 後重試 (第 {attempt + 1}/{maxAttempts} 次)");
+                        await Task.Delay(delay, cancellationToken);
+                        continue;
+                    }
+
+                    if (attempt > 1)
+                    {
+                        LOG.Error_Log($"[主題{action}] 經過 {attempt} 次嘗試仍失敗 - HTTP {statusCode}: {responseBody}");
+                    }
+                    else
+                    {
+                        LOG.Error_Log($"[主題{action}] 失敗 - HTTP {statusCode}: {responseBody}");
+                    }
+
+                    return new TopicResponse
+                    {
+                        StatusCode = statusCode,
                         RawResponse = responseBody,
-                        ErrorMessage = $"主題{action}失敗，HTTP 狀態碼: {(int)httpResponse.StatusCode}",
+                        ErrorMessage = $"主題{action}失敗，HTTP 狀態碼: {statusCode}",
                         FailureCount = tokens.Count
                     };
-
-                    LOG.Error_Log($"[主題{action}] 失敗 - HTTP {(int)httpResponse.StatusCode}: {responseBody}");
-                    return errorResult;
+                }
+                catch (FCMException)
+                {
+                    throw;
+                }
+                catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex) when (attempt < maxAttempts && IsRetryableException(ex))
+                {
+                    var delay = CalculateRetryDelay(attempt, retrySettings);
+                    LOG.Warn_Log($"[主題{action}] 發送異常 ({ex.GetType().Name}: {ex.Message})，將在 {delay.TotalMilliseconds}ms 後重試 (第 {attempt + 1}/{maxAttempts} 次)");
+                    await Task.Delay(delay, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    LOG.Error_Log($"[主題{action}] 失敗", ex);
+                    throw new FCMException($"主題{action}操作失敗: {ex.Message}", ex);
                 }
             }
-            catch (FCMException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                LOG.Error_Log($"[主題{action}] 失敗", ex);
-                throw new FCMException($"主題{action}操作失敗: {ex.Message}", ex);
-            }
+
+            throw new FCMException($"主題{action}操作失敗：已超過最大重試次數");
         }
 
         /// <summary>

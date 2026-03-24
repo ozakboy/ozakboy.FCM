@@ -24,6 +24,38 @@ namespace Ozakboy.FCM.Models.Settings
         /// Service Account JSON 金鑰內容（直接嵌入設定中，與 ServiceAccountKeyPath 擇一使用）
         /// </summary>
         public ServiceAccountKey? ServiceAccountKey { get; set; }
+
+        /// <summary>
+        /// 重試設定
+        /// </summary>
+        public RetrySettings Retry { get; set; } = new();
+    }
+
+    /// <summary>
+    /// 重試機制設定
+    /// </summary>
+    public class RetrySettings
+    {
+        /// <summary>
+        /// 是否啟用自動重試（預設啟用）
+        /// </summary>
+        public bool Enabled { get; set; } = true;
+
+        /// <summary>
+        /// 最大重試次數（預設 3 次）
+        /// </summary>
+        public int MaxRetryCount { get; set; } = 3;
+
+        /// <summary>
+        /// 初始重試延遲（毫秒，預設 1000ms）
+        /// 後續每次重試延遲加倍（指數退避）
+        /// </summary>
+        public int InitialDelayMs { get; set; } = 1000;
+
+        /// <summary>
+        /// 最大重試延遲（毫秒，預設 30000ms = 30 秒）
+        /// </summary>
+        public int MaxDelayMs { get; set; } = 30000;
     }
 
     /// <summary>
