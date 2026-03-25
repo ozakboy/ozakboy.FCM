@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Ozakboy.FCM.WebApiTest")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+05f750c763688d4b05bd5feaa2f7306e2194f474")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f09e7052842470d7a0c13480ed1a8505b54fddee")]
 [assembly: System.Reflection.AssemblyProductAttribute("Ozakboy.FCM.WebApiTest")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Ozakboy.FCM.WebApiTest")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

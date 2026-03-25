@@ -10,6 +10,7 @@
     <Description>Google Firebase Cloud Messaging (FCM) HTTP v1 API 推播通知套件，支援單一裝置推播、主題推播、條件推播、批次推播、主題訂閱/取消訂閱，支援 Android/iOS/Web 平台專屬設定</Description>
     <PackageTags>FCM;Firebase;CloudMessaging;PushNotification;Google</PackageTags>
     <Version>2.0.0</Version>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <!-- 共用套件（所有 TFM） -->

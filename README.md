@@ -1,39 +1,46 @@
 [![nuget](https://img.shields.io/badge/nuget-ozakboy.FCM-blue)](https://www.nuget.org/packages/Ozakboy.FCM/) [![github](https://img.shields.io/badge/github-ozakboy.FCM-blue)](https://github.com/ozakboy/ozakboy.FCM/)
 
-## 要求
+## Language / 語言
 
-- .NET 6.0 / .NET 7.0 / .NET 8.0
+- [繁體中文](wiki/README.zh-TW.md)
 
-## 功能
+## Requirements
 
-整合 Google Firebase Cloud Messaging (FCM) HTTP v1 API，提供完整的推播通知功能：
+- .NET 6.0 / .NET 7.0 / .NET 8.0 / .NET 9.0
 
-- 單一裝置推播通知
-- 主題 (Topic) 推播通知
-- 條件 (Condition) 推播通知
-- 批次 (Multicast) 推播通知
-- 主題訂閱 / 取消訂閱
-- 純資料靜默推播 (Data-only)
-- 訊息格式驗證（不實際發送）
-- Android / iOS (APNs) / Web Push 平台專屬設定
-- OAuth2 Service Account 認證，自動 Token 快取與刷新
-- 使用 ozakboy.NLOG 完整日誌記錄
+## Features
 
-## 安裝
+A complete Google Firebase Cloud Messaging (FCM) HTTP v1 API integration library for .NET:
+
+- Single device push notifications
+- Topic-based push notifications
+- Condition-based push notifications
+- Batch / Multicast push notifications (auto-chunking for 500+ recipients)
+- Scheduled push notifications (delay or specific time)
+- Topic subscribe / unsubscribe management
+- Data-only silent push notifications
+- Message validation (dry-run without sending)
+- Platform-specific configuration for Android / iOS (APNs) / Web Push
+- Fluent message builder API
+- OAuth2 Service Account authentication with automatic token caching & refresh
+- Exponential backoff retry with Retry-After header support
+- Full logging via ozakboy.NLOG
+
+## Installation
 
 ```
 dotnet add package Ozakboy.FCM
 ```
 
-## 設定
+## Configuration
 
-### 1. 取得 Firebase Service Account 金鑰
+### 1. Obtain Firebase Service Account Key
 
-前往 [Firebase Console](https://console.firebase.google.com/) → 專案設定 → 服務帳戶 → 產生新的私密金鑰
+Go to [Firebase Console](https://console.firebase.google.com/) -> Project Settings -> Service Accounts -> Generate New Private Key
 
-### 2. 設定 appsettings.json
+### 2. Configure appsettings.json
 
-**方式一：指定金鑰檔案路徑**
+**Option A: Specify key file path**
 ```json
 {
   "FCMSettings": {
@@ -43,7 +50,7 @@ dotnet add package Ozakboy.FCM
 }
 ```
 
-**方式二：直接嵌入金鑰內容**
+**Option B: Embed key content directly**
 ```json
 {
   "FCMSettings": {
@@ -64,15 +71,31 @@ dotnet add package Ozakboy.FCM
 }
 ```
 
-### 3. 註冊服務 (Program.cs)
+**Retry Settings (optional)**
+```json
+{
+  "FCMSettings": {
+    "ProjectId": "your-firebase-project-id",
+    "ServiceAccountKeyPath": "serviceAccountKey.json",
+    "Retry": {
+      "Enabled": true,
+      "MaxRetryCount": 3,
+      "InitialDelayMs": 1000,
+      "MaxDelayMs": 30000
+    }
+  }
+}
+```
+
+### 3. Register Services (Program.cs)
 
 ```csharp
 using Ozakboy.FCM.Extensions;
 
-// 方式一：從 Configuration 讀取
+// Option A: Load from Configuration
 builder.Services.AddOzakboyFCM(builder.Configuration);
 
-// 方式二：程式碼設定
+// Option B: Configure in code
 builder.Services.AddOzakboyFCM(options =>
 {
     options.ProjectId = "your-firebase-project-id";
@@ -80,9 +103,9 @@ builder.Services.AddOzakboyFCM(options =>
 });
 ```
 
-## 使用方式
+## Usage
 
-### 注入服務
+### Inject the Service
 
 ```csharp
 using Ozakboy.FCM.Interfaces;
@@ -99,23 +122,23 @@ public class NotifyController : ControllerBase
 }
 ```
 
-### 發送通知到單一裝置
+### Send Notification to a Single Device
 
 ```csharp
 var result = await _fcmService.SendAsync("device_token",
-    new Notification { Title = "標題", Body = "內容" });
+    new Notification { Title = "Hello", Body = "World" });
 
 if (result.IsSuccess)
-    Console.WriteLine($"發送成功: {result.MessageName}");
+    Console.WriteLine($"Success: {result.MessageName}");
 else
-    Console.WriteLine($"發送失敗: {result.ErrorMessage}");
+    Console.WriteLine($"Failed: {result.ErrorMessage}");
 ```
 
-### 發送通知（附帶自訂資料）
+### Send Notification with Custom Data
 
 ```csharp
 var result = await _fcmService.SendAsync("device_token",
-    new Notification { Title = "訂單通知", Body = "您的訂單已出貨" },
+    new Notification { Title = "Order Update", Body = "Your order has been shipped" },
     new Dictionary<string, string>
     {
         { "order_id", "12345" },
@@ -123,7 +146,7 @@ var result = await _fcmService.SendAsync("device_token",
     });
 ```
 
-### 發送靜默推播（純資料，不顯示通知）
+### Send Silent Push (Data-only)
 
 ```csharp
 var result = await _fcmService.SendDataAsync("device_token",
@@ -134,7 +157,7 @@ var result = await _fcmService.SendDataAsync("device_token",
     });
 ```
 
-### 發送完全自訂訊息（含平台專屬設定）
+### Send Fully Custom Message with Platform-Specific Settings
 
 ```csharp
 var message = new FCMMessage
@@ -142,8 +165,8 @@ var message = new FCMMessage
     Token = "device_token",
     Notification = new Notification
     {
-        Title = "促銷活動",
-        Body = "限時 8 折優惠！",
+        Title = "Promotion",
+        Body = "Limited time 20% off!",
         Image = "https://example.com/promo.jpg"
     },
     Data = new Dictionary<string, string>
@@ -183,78 +206,184 @@ var message = new FCMMessage
 var result = await _fcmService.SendAsync(message);
 ```
 
-### 主題推播
+### Using the Fluent Message Builder
 
 ```csharp
-// 發送到主題
-var result = await _fcmService.SendToTopicAsync("news",
-    new Notification { Title = "最新消息", Body = "今日頭條新聞" });
+using Ozakboy.FCM.Builders;
 
-// 條件推播
-var result = await _fcmService.SendToConditionAsync(
-    "'news' in topics && 'premium' in topics",
-    new Notification { Title = "VIP 專屬", Body = "VIP 會員專屬優惠" });
+var message = FCMMessageBuilder.Create()
+    .ToToken("device_token")
+    .WithNotification("Promotion", "Limited time offer!")
+    .AddData("promo_id", "123")
+    .WithHighPriority()
+    .WithSound()
+    .WithBadge(1)
+    .WithChannelId("promotions")
+    .WithWebLink("https://example.com/promo")
+    .Build();
+
+var result = await _fcmService.SendAsync(message);
 ```
 
-### 批次推播
+### Topic Push
+
+```csharp
+// Send to a topic
+var result = await _fcmService.SendToTopicAsync("news",
+    new Notification { Title = "Breaking News", Body = "Today's headline" });
+
+// Condition-based push
+var result = await _fcmService.SendToConditionAsync(
+    "'news' in topics && 'premium' in topics",
+    new Notification { Title = "VIP Exclusive", Body = "Premium member offer" });
+```
+
+### Batch / Multicast Push
 
 ```csharp
 var tokens = new List<string> { "token1", "token2", "token3" };
 
 var batchResult = await _fcmService.SendMulticastAsync(tokens,
-    new Notification { Title = "批次通知", Body = "群發訊息" });
+    new Notification { Title = "Batch Notification", Body = "Broadcast message" });
 
-Console.WriteLine($"成功: {batchResult.SuccessCount}, 失敗: {batchResult.FailureCount}");
+Console.WriteLine($"Success: {batchResult.SuccessCount}, Failed: {batchResult.FailureCount}");
+
+// Check for invalid tokens
+if (batchResult.HasUnregisteredTokens)
+{
+    Console.WriteLine($"Unregistered tokens: {string.Join(", ", batchResult.UnregisteredTokens)}");
+}
 ```
 
-### 主題訂閱 / 取消訂閱
+### Scheduled Push
 
 ```csharp
-// 訂閱主題
+// Send after a delay
+var result = await _fcmService.SendScheduledAsync("device_token",
+    new Notification { Title = "Reminder", Body = "Don't forget!" },
+    TimeSpan.FromMinutes(30));
+
+// Send at a specific time
+var result = await _fcmService.SendScheduledAsync("device_token",
+    new Notification { Title = "Scheduled", Body = "Timed notification" },
+    new DateTimeOffset(2025, 12, 25, 9, 0, 0, TimeSpan.FromHours(8)));
+```
+
+### Topic Subscribe / Unsubscribe
+
+```csharp
+// Subscribe to a topic
 var result = await _fcmService.SubscribeToTopicAsync("news", "device_token");
 
-// 批次訂閱
+// Batch subscribe
 var result = await _fcmService.SubscribeToTopicAsync("news",
     new List<string> { "token1", "token2" });
 
-// 取消訂閱
+// Unsubscribe
 var result = await _fcmService.UnsubscribeFromTopicAsync("news", "device_token");
 ```
 
-### 驗證訊息格式
+### Validate Message Format (Dry Run)
 
 ```csharp
 var message = new FCMMessage
 {
     Token = "device_token",
-    Notification = new Notification { Title = "測試", Body = "驗證格式" }
+    Notification = new Notification { Title = "Test", Body = "Validate format" }
 };
 
 var result = await _fcmService.ValidateAsync(message);
 ```
 
-## 可用方法總覽
+## API Reference
 
-| 方法 | 說明 |
-|------|------|
-| `SendAsync(token, notification)` | 發送通知到單一裝置 |
-| `SendAsync(token, notification, data)` | 發送通知 + 自訂資料到單一裝置 |
-| `SendDataAsync(token, data)` | 發送純資料靜默推播 |
-| `SendAsync(FCMMessage)` | 發送完全自訂訊息 |
-| `ValidateAsync(FCMMessage)` | 驗證訊息格式（不發送） |
-| `SendToTopicAsync(topic, notification)` | 發送通知到主題 |
-| `SendToTopicAsync(topic, notification, data)` | 發送通知 + 資料到主題 |
-| `SendDataToTopicAsync(topic, data)` | 發送純資料到主題 |
-| `SendToConditionAsync(condition, notification)` | 條件推播 |
-| `SendToConditionAsync(condition, notification, data)` | 條件推播 + 資料 |
-| `SendMulticastAsync(tokens, notification)` | 批次推播 |
-| `SendMulticastAsync(tokens, notification, data)` | 批次推播 + 資料 |
-| `SendBatchAsync(messages)` | 批次發送多個不同訊息 |
-| `SubscribeToTopicAsync(topic, token)` | 訂閱主題（單一裝置） |
-| `SubscribeToTopicAsync(topic, tokens)` | 訂閱主題（多裝置） |
-| `UnsubscribeFromTopicAsync(topic, token)` | 取消訂閱（單一裝置） |
-| `UnsubscribeFromTopicAsync(topic, tokens)` | 取消訂閱（多裝置） |
+### Single Device
 
-## Firebase 專案建立
+| Method | Description |
+|--------|-------------|
+| `SendAsync(token, notification)` | Send notification to a single device |
+| `SendAsync(token, notification, data)` | Send notification + custom data |
+| `SendDataAsync(token, data)` | Send data-only silent push |
+| `SendAsync(FCMMessage)` | Send fully custom message |
+| `ValidateAsync(FCMMessage)` | Validate message format (dry run) |
 
-前往 https://console.firebase.google.com/ 建立你的專案
+### Topic
+
+| Method | Description |
+|--------|-------------|
+| `SendToTopicAsync(topic, notification)` | Send notification to a topic |
+| `SendToTopicAsync(topic, notification, data)` | Send notification + data to a topic |
+| `SendDataToTopicAsync(topic, data)` | Send data-only to a topic |
+
+### Condition
+
+| Method | Description |
+|--------|-------------|
+| `SendToConditionAsync(condition, notification)` | Condition-based push |
+| `SendToConditionAsync(condition, notification, data)` | Condition-based push + data |
+
+### Batch / Multicast
+
+| Method | Description |
+|--------|-------------|
+| `SendMulticastAsync(tokens, notification)` | Batch push to multiple devices |
+| `SendMulticastAsync(tokens, notification, data)` | Batch push + data |
+| `SendBatchAsync(messages)` | Send multiple different messages |
+
+### Scheduled
+
+| Method | Description |
+|--------|-------------|
+| `SendScheduledAsync(token, notification, delay)` | Send after TimeSpan delay |
+| `SendScheduledAsync(token, notification, data, delay)` | Send with data after delay |
+| `SendScheduledAsync(token, notification, sendAt)` | Send at specific DateTimeOffset |
+| `SendScheduledAsync(message, delay)` | Send custom message after delay |
+| `SendScheduledAsync(message, sendAt)` | Send custom message at specific time |
+
+### Topic Management
+
+| Method | Description |
+|--------|-------------|
+| `SubscribeToTopicAsync(topic, token)` | Subscribe single device to topic |
+| `SubscribeToTopicAsync(topic, tokens)` | Subscribe multiple devices to topic |
+| `UnsubscribeFromTopicAsync(topic, token)` | Unsubscribe single device |
+| `UnsubscribeFromTopicAsync(topic, tokens)` | Unsubscribe multiple devices |
+
+## Error Handling
+
+The library provides typed exceptions:
+
+| Exception | Description |
+|-----------|-------------|
+| `FCMException` | Base exception for all FCM errors |
+| `FCMConfigurationException` | Configuration errors (missing ProjectId, invalid key) |
+| `FCMAuthenticationException` | Authentication errors (invalid credentials, token failure) |
+
+```csharp
+try
+{
+    var result = await _fcmService.SendAsync("token",
+        new Notification { Title = "Test", Body = "Hello" });
+}
+catch (FCMConfigurationException ex)
+{
+    // Handle configuration errors
+}
+catch (FCMAuthenticationException ex)
+{
+    // Handle authentication errors
+}
+catch (FCMException ex)
+{
+    // Handle other FCM errors
+    Console.WriteLine($"StatusCode: {ex.StatusCode}, ErrorCode: {ex.ErrorCode}");
+}
+```
+
+## Firebase Project Setup
+
+Go to https://console.firebase.google.com/ to create your project.
+
+## License
+
+MIT
