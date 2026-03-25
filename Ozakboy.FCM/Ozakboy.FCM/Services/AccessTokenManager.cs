@@ -11,7 +11,7 @@ namespace Ozakboy.FCM.Services
     /// OAuth2 Access Token 管理器
     /// 負責取得、快取及自動刷新 Google Service Account 的 Access Token
     /// </summary>
-    internal class AccessTokenManager
+    public class AccessTokenManager
     {
         private readonly FCMSettings _settings;
         private readonly IMemoryCache _cache;

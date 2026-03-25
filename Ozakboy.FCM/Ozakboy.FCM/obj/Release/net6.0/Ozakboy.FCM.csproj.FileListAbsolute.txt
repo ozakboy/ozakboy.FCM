@@ -10,3 +10,16 @@ C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Releas
 C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\refint\Ozakboy.FCM.dll
 C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.pdb
 C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\ref\Ozakboy.FCM.dll
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.csproj.AssemblyReference.cache
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.GeneratedMSBuildEditorConfig.editorconfig
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.AssemblyInfoInputs.cache
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.AssemblyInfo.cs
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.csproj.CoreCompileInputs.cache
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.sourcelink.json
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.dll
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\refint\Ozakboy.FCM.dll
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.pdb
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.deps.json
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.dll
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.pdb
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\ref\Ozakboy.FCM.dll

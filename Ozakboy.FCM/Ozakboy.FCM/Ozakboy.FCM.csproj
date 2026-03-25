@@ -12,14 +12,35 @@
     <Version>2.0.0</Version>
   </PropertyGroup>
 
+  <!-- 共用套件（所有 TFM） -->
   <ItemGroup>
     <PackageReference Include="Google.Apis.Auth" Version="1.64.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.1" />
     <PackageReference Include="ozakboy.NLOG" Version="2.1.0" />
-    <PackageReference Include="System.Text.Json" Version="6.0.11" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <!-- net6.0 / net7.0: 使用 8.x 版（6.x 有安全漏洞） -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' Or '$(TargetFramework)' == 'net7.0'">
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+  </ItemGroup>
+
+  <!-- net8.0: 使用 8.x 版 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+  </ItemGroup>
+
+  <!-- net9.0: 使用 9.x 版 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
   </ItemGroup>
 
 </Project>

@@ -13,12 +13,13 @@ using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("Ozakboy")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
-[assembly: System.Reflection.AssemblyDescriptionAttribute(" 發送推播、訂閱主題、主題發送推播")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyDescriptionAttribute("Google Firebase Cloud Messaging (FCM) HTTP v1 API 推播通知套件，支援單一裝置推播、主題推播、條件推播、批次推播、" +
+    "主題訂閱/取消訂閱，支援 Android/iOS/Web 平台專屬設定")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("2.0.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.0.0+05f750c763688d4b05bd5feaa2f7306e2194f474")]
 [assembly: System.Reflection.AssemblyProductAttribute("Ozakboy.FCM")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Ozakboy.FCM")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("2.0.0.0")]
 [assembly: System.Reflection.AssemblyMetadataAttribute("RepositoryUrl", "https://github.com/ozakboy/ozakboy.FCM")]
 
 // 由 MSBuild WriteCodeFragment 類別產生。
