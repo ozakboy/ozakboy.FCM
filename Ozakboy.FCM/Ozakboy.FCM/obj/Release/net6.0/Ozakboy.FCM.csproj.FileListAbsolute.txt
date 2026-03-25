@@ -1,15 +1,6 @@
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.deps.json
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.dll
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.pdb
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.csproj.AssemblyReference.cache
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.AssemblyInfoInputs.cache
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.AssemblyInfo.cs
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.csproj.CoreCompileInputs.cache
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.dll
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\refint\Ozakboy.FCM.dll
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.pdb
-C:\Users\WIN\source\repos\Ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\ref\Ozakboy.FCM.dll
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.deps.json
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.dll
+D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.pdb
 D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.csproj.AssemblyReference.cache
 D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.GeneratedMSBuildEditorConfig.editorconfig
 D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.AssemblyInfoInputs.cache
@@ -19,7 +10,4 @@ D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\R
 D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.dll
 D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\refint\Ozakboy.FCM.dll
 D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\Ozakboy.FCM.pdb
-D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.deps.json
-D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.dll
-D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\bin\Release\net6.0\Ozakboy.FCM.pdb
 D:\程式專案\Ozakboy_GitHub\ozakboy\ozakboy.FCM\Ozakboy.FCM\Ozakboy.FCM\obj\Release\net6.0\ref\Ozakboy.FCM.dll
